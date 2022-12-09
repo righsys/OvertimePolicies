@@ -16,7 +16,8 @@ namespace OvertimePolicies.Services.Commands.Employee.AddEmployee
         private readonly IDateTimeHelper _dateTimeHelper;
         private readonly ILogger<AddEmployeeCommand> _logger;
 
-        public AddEmployeeCommandHandler(IEFCoreEmployeeRepository employeeRepository,
+        public AddEmployeeCommandHandler(
+            IEFCoreEmployeeRepository employeeRepository,
             ICurrentUserService currentUserService,
             IDateTimeHelper dateTimeHelper,
             ILogger<AddEmployeeCommand> logger)

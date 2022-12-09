@@ -9,40 +9,50 @@ using OvertimePolicies.Services.Interfaces;
 using OvertimePolicies.WebApp.Common.DatetimeHelper;
 using Microsoft.Extensions.Logging;
 using OvertimePolicies.Domain.Events;
+using System.Diagnostics.SymbolStore;
 
 namespace OvertimePolicies.Services.Tests.Employee.Commands
 {
-    public class AddEmployeeCommandTests:CommandTestBase<AddEmployeeCommand>
+    public class AddEmployeeCommandTests : CommandTestBase
     {
-        public AddEmployeeCommandTests(
-                IEFCoreEmployeeRepository employeeRepository, 
-                ICurrentUserService currentUserService, 
-                IDateTimeHelper dateTimeHelper, 
-                ILogger<AddEmployeeCommand> logger
-            ) : base(employeeRepository, currentUserService, dateTimeHelper,logger)
-        {
-
-        }
+        public AddEmployeeCommandTests() { }
 
         [Fact]
-        public void Handle_GivenValidRequest_ShouldRaiseAddEmployeeNotification() 
+        public void Handle_GivenValidRequest_ShouldRaiseAddEmployeeNotification()
         {
             // Arrange
             var mediatorMock = new Mock<IMediator>();
-            var sut = new AddEmployeeCommandHandler(_employeeRepository, _currentUserService, _dateTimeHelper,_logger);
-            var employee = new Domain.Entities.Employee 
+            var currentUserServoceMock = new Mock<ICurrentUserService>();
+            var employeeRepositoryMock = new Mock<IEFCoreEmployeeRepository>();
+            var dateTimeHelperMock = new Mock<IDateTimeHelper>();
+            var iLoggerMock = new Mock<ILogger<AddEmployeeCommand>>();
+
+            var sut = new AddEmployeeCommandHandler(employeeRepositoryMock.Object,
+                    currentUserServoceMock.Object,
+                    dateTimeHelperMock.Object,
+                    iLoggerMock.Object);
+
+            var employee = new Domain.Entities.Employee
             {
                 EmployeeId = 1234,
-                FirstName="Morteza",
-                LastName="Hasani",
-                EmploymentDate=DateTime.Now                
+                FirstName = "Morteza",
+                LastName = "Hasani",
+                EmploymentDate = DateTime.Now
+            };
+            var command = new AddEmployeeCommand()
+            {
+                FirstName = "Morteza",
+                LastName = "Hasani",
+                EmploymentDate = DateTime.Now
             };
 
-            // Act
-            var result = sut.Handle(new AddEmployeeCommand() { FirstName = "Morteza", LastName = "Hasani", EmploymentDate = DateTime.Now }, CancellationToken.None);
+            // Act            
+            var result = sut.Handle(command, CancellationToken.None);
 
-            // Assert
-            mediatorMock.Verify(m => m.Publish(It.Is<EmployeeAddedEvent>(x => x.Employee == employee), It.IsAny<CancellationToken>()), Times.Once);
+            // Assert        
+            mediatorMock.Setup(m => m.Publish(It.Is<EmployeeAddedEvent>(x => x.Employee == employee), It.IsAny<CancellationToken>()))
+                        .Callback<EmployeeAddedEvent, CancellationToken>(async (notification, cToken) => await sut.Handle(command, cToken));
+            mediatorMock.Verify();
         }
     }
 }
